@@ -403,7 +403,7 @@ generate_uri() {
     # SIP002 格式 (URL编码)
     local encoded_userinfo
     if command -v python3 >/dev/null 2>&1; then
-        encoded_userinfo=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$userinfo', safe=''))" 2>/dev/null || echo "$userinfo")
+        encoded_userinfo=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$userinfo" 2>/dev/null || echo "$userinfo")
     else
         encoded_userinfo=$(printf "%s" "$userinfo" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
     fi
@@ -453,3 +453,145 @@ else
 fi
 echo ""
 echo "=========================================="
+
+# -----------------------
+# Create `sb` management script at /usr/local/bin/sb
+# (Do not modify other parts of the original script; sb is added as a separate tool)
+# -----------------------
+# Create sb management script (重置端口/密码已删除)
+SB_PATH="/usr/local/bin/sb"
+info "正在创建 sb 管理脚本: $SB_PATH"
+
+cat > "$SB_PATH" <<'SB_SCRIPT'
+#!/usr/bin/env bash
+set -euo pipefail
+
+info() { echo -e "\033[1;34m[INFO]\033[0m $*"; }
+warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
+err()  { echo -e "\033[1;31m[ERR]\033[0m $*" >&2; }
+
+CONFIG_PATH="/etc/sing-box/config.json"
+SS_URI_PATH="/etc/sing-box/ss_uri.txt"
+BIN_PATH="/usr/bin/sing-box"
+SERVICE_NAME="sing-box"
+
+detect_os() {
+    if [ -f /etc/os-release ]; then . /etc/os-release; ID="${ID:-}"; ID_LIKE="${ID_LIKE:-}"; else ID=""; ID_LIKE=""; fi
+    if echo "$ID $ID_LIKE" | grep -qi "alpine"; then OS="alpine"
+    elif echo "$ID $ID_LIKE" | grep -Ei "debian|ubuntu" >/dev/null; then OS="debian"
+    elif echo "$ID $ID_LIKE" | grep -Ei "centos|rhel|fedora" >/dev/null; then OS="redhat"
+    else OS="unknown"; fi
+}
+detect_os
+
+service_start() { [ "$OS" = "alpine" ] && rc-service "$SERVICE_NAME" start || systemctl start "$SERVICE_NAME"; }
+service_stop()  { [ "$OS" = "alpine" ] && rc-service "$SERVICE_NAME" stop  || systemctl stop "$SERVICE_NAME"; }
+service_restart(){ [ "$OS" = "alpine" ] && rc-service "$SERVICE_NAME" restart || systemctl restart "$SERVICE_NAME"; }
+service_status(){ [ "$OS" = "alpine" ] && rc-service "$SERVICE_NAME" status  || systemctl status "$SERVICE_NAME" --no-pager; }
+
+read_config_fields() {
+    [ ! -f "$CONFIG_PATH" ] && { err "未找到配置文件"; return 1; }
+    if command -v python3 >/dev/null 2>&1; then
+        METHOD=$(python3 -c 'import json; c=json.load(open("'"$CONFIG_PATH"'")); print(c["inbounds"][0].get("method",""))')
+        PSK=$(python3 -c 'import json; c=json.load(open("'"$CONFIG_PATH"'")); print(c["inbounds"][0].get("password",""))')
+        PORT=$(python3 -c 'import json; c=json.load(open("'"$CONFIG_PATH"'")); print(c["inbounds"][0].get("listen_port",""))')
+    else
+        METHOD=$(grep -m1 '"method"' "$CONFIG_PATH" 2>/dev/null | sed -E 's/.*"method"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)
+        PSK=$(grep -m1 '"password"' "$CONFIG_PATH" 2>/dev/null | sed -E 's/.*"password"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)
+        PORT=$(grep -m1 '"listen_port"' "$CONFIG_PATH" 2>/dev/null | sed -E 's/.*"listen_port"[[:space:]]*:[[:space:]]*([0-9]+).*/\1/' || true)
+    fi
+}
+
+generate_and_save_uri() {
+    read_config_fields || return 1
+    PUBLIC_IP=""
+    for url in "https://api.ipify.org" "https://ipinfo.io/ip" "https://ifconfig.me" "https://icanhazip.com" "https://ipecho.net/plain"; do
+        PUBLIC_IP=$(curl -s --max-time 5 "$url" 2>/dev/null | tr -d '[:space:]' || true)
+        [ -n "$PUBLIC_IP" ] && break
+    done
+    [ -z "$PUBLIC_IP" ] && PUBLIC_IP="YOUR_SERVER_IP"
+    userinfo="${METHOD}:${PSK}"
+    if command -v python3 >/dev/null 2>&1; then
+        encoded_userinfo=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "$userinfo")
+    else
+        encoded_userinfo=$(printf "%s" "$userinfo" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
+    fi
+    base64_userinfo=$(printf "%s" "$userinfo" | base64 -w0 2>/dev/null || printf "%s" "$userinfo" | base64 | tr -d '\n')
+    echo "ss://${encoded_userinfo}@${PUBLIC_IP}:${PORT}#singbox-ss2022" > "$SS_URI_PATH"
+    echo "ss://${base64_userinfo}@${PUBLIC_IP}:${PORT}#singbox-ss2022" >> "$SS_URI_PATH"
+    info "SS URI 已写入: $SS_URI_PATH"
+}
+
+action_view_uri() { [ -f "$SS_URI_PATH" ] && sed -n '1,200p' "$SS_URI_PATH" || (warn "未找到 URI，尝试生成..."; generate_and_save_uri && sed -n '1,200p' "$SS_URI_PATH"); }
+action_view_config() { echo "$CONFIG_PATH"; }
+action_edit_config() { [ ! -f "$CONFIG_PATH" ] && { err "配置文件不存在"; return 1; }; ${EDITOR:-nano} "$CONFIG_PATH"; command -v sing-box >/dev/null 2>&1 && sing-box check -c "$CONFIG_PATH" >/dev/null 2>&1 && service_restart && generate_and_save_uri || warn "配置校验失败"; }
+
+action_update() { info "开始更新 sing-box..."; [ "$OS" = "alpine" ] && { apk update || warn "apk update 失败"; apk add --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community sing-box || bash <(curl -fsSL https://sing-box.app/install.sh) || err "更新失败"; } || bash <(curl -fsSL https://sing-box.app/install.sh) || err "更新失败"; [ -x "$(command -v sing-box)" ] && service_restart; info "更新完成"; }
+
+action_uninstall() {
+    info "正在卸载 sing-box（直接全部删除，无确认）..."
+    service_stop || true
+
+    if [ "$OS" = "alpine" ]; then
+        rc-update del "$SERVICE_NAME" default >/dev/null 2>&1 || true
+        [ -f "/etc/init.d/$SERVICE_NAME" ] && rm -f "/etc/init.d/$SERVICE_NAME"
+    else
+        systemctl stop "$SERVICE_NAME" >/dev/null 2>&1 || true
+        systemctl disable "$SERVICE_NAME" >/dev/null 2>&1 || true
+        [ -f "/etc/systemd/system/$SERVICE_NAME.service" ] && rm -f "/etc/systemd/system/$SERVICE_NAME.service"
+        systemctl daemon-reload >/dev/null 2>&1 || true
+    fi
+
+    # 删除配置、日志、可执行文件
+    rm -rf /etc/sing-box >/dev/null 2>&1 || true
+    rm -f /var/log/sing-box.log /var/log/sing-box.err >/dev/null 2>&1 || true
+    rm -f "$SS_URI_PATH" >/dev/null 2>&1 || true
+    rm -f "$BIN_PATH" >/dev/null 2>&1 || true
+
+    # 删除 sb 管理脚本
+    [ -f "/usr/local/bin/sb" ] && rm -f "/usr/local/bin/sb"
+
+    info "卸载完成，所有配置、日志、可执行文件及 sb 管理脚本已删除"
+}
+
+while true; do
+    cat <<'MENU'
+
+==========================
+ Sing-box 管理面板 (快捷指令 sb)
+==========================
+1) 查看 SS URI
+2) 查看配置文件路径
+3) 编辑配置文件
+4) 启动服务
+5) 停止服务
+6) 重启服务
+7) 查看状态
+8) 更新 sing-box
+9) 卸载 sing-box（无确认）
+0) 退出
+==========================
+MENU
+    read -p "请输入选项: " opt
+    case "${opt:-}" in
+        1) action_view_uri ;;
+        2) action_view_config ;;
+        3) action_edit_config ;;
+        4) service_start && info "已发送启动命令" ;;
+        5) service_stop && info "已发送停止命令" ;;
+        6) service_restart && info "已发送重启命令" ;;
+        7) service_status ;;
+        8) action_update ;;
+        9) action_uninstall; exit 0 ;;
+        0) exit 0 ;;
+        *) warn "无效选项" ;;
+    esac
+    echo ""
+done
+SB_SCRIPT
+
+chmod +x "$SB_PATH" || warn "无法设置 $SB_PATH 为可执行"
+info "sb 已创建：请输入 sb 运行管理面板"
+
+
+# end of script
