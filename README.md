@@ -19,4 +19,4 @@
 在 VPS 上直接执行以下命令：
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/caigouzi121380/singbox-deploy/main/deploy-singbox-ss2022.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/caigouzi121380/singbox-deploy/main/install-singbox.sh)"
