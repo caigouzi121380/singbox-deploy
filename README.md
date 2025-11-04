@@ -36,7 +36,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/caigouzi121380/singbox-d
 
 ⸻
 
-✅ 管理命令
+## ✅ 管理命令
 
 脚本会自动安装服务，管理方式和系统一致：
 
