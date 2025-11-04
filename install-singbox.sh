@@ -664,21 +664,46 @@ action_edit_config() {
 # Reset port & password
 action_reset_port_pwd() {
     [ -f "$CONFIG_PATH" ] || { err "配置文件不存在: $CONFIG_PATH"; return 1; }
+
     read -p "输入新端口（回车随机 10000-60000）： " new_port
     [ -z "$new_port" ] && new_port=$((RANDOM % 50001 + 10000))
+
     read -p "输入新密码（回车随机生成 Base64 密钥）： " new_pwd
     [ -z "$new_pwd" ] && new_pwd=$(head -c 16 /dev/urandom | base64 | tr -d '\n\r')
-    if command -v jq >/dev/null 2>&1; then
-        tmpfile=$(mktemp)
-        jq --arg port "$new_port" --arg pwd "$new_pwd" \
-           '.inbounds[0].listen_port=($port|tonumber) | .inbounds[0].password=$pwd' \
-           "$CONFIG_PATH" > "$tmpfile" && mv "$tmpfile" "$CONFIG_PATH"
-    else
-        sed -E -i "s/(\"listen_port\"[[:space:]]*:[[:space:]]*)[0-9]+/\1${new_port}/" "$CONFIG_PATH" || true
-        sed -E -i "0,/(\"password\"[[:space:]]*:[[:space:]]*\")([^\"\n]*)\"/s//\"password\": \"${new_pwd}\"/" "$CONFIG_PATH" || true
-    fi
-    info "已写入新端口($new_port)与新密码(隐藏)，正在重启服务..."
-    service_restart || warn "重启失败"
+
+    # 停止 sing-box 服务
+    info "正在停止 sing-box 服务..."
+    service_stop || warn "停止服务失败"
+
+    # 直接覆盖配置文件
+    cat > "$CONFIG_PATH" <<EOF
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "shadowsocks",
+      "listen": "::",
+      "listen_port": $new_port,
+      "method": "$METHOD",
+      "password": "$new_pwd",
+      "tag": "ss2022-in"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct-out"
+    }
+  ]
+}
+EOF
+
+    info "已写入新端口($new_port)与新密码(隐藏)，正在启动服务..."
+    service_start || warn "启动服务失败"
+
     # 生成新的 SS URI
     generate_and_save_uri || warn "生成 SS URI 失败"
 }
