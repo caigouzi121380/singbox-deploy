@@ -812,24 +812,19 @@ install_singbox
 UUID=$(cat /proc/sys/kernel/random/uuid)
 REALITY_PK=$(head -c 32 /dev/urandom | base64)
 REALITY_SID=$(head -c 8 /dev/urandom | base64)
-read -p "输入线路机监听端口（留空自动选择未占用端口）: " p
-
-# 如果用户没输入，则随机选一个空闲端口
-if [ -z "$p" ]; then
-    while :; do
-        candidate=$((RANDOM % 45001 + 20000))  # 20000-65000
-        # 检查端口是否被占用
-        is_used=$(awk '{print $2}' /proc/net/tcp /proc/net/tcp6 2>/dev/null | \
-                  grep -i $(printf '%04X' $candidate))
-        if [ -z "$is_used" ]; then
-            p=$candidate
-            break
-        fi
-    done
+read -p "输入线路机监听端口（留空则随机 20000-65000）: " USER_PORT
+if [ -z "$USER_PORT" ]; then
+    LISTEN_PORT=$(shuf -i 20000-65000 -n 1 2>/dev/null || echo $((RANDOM % 45001 + 20000)))
+    info "使用随机端口: $LISTEN_PORT"
+else
+    if ! [[ "$USER_PORT" =~ ^[0-9]+$ ]] || [ "$USER_PORT" -lt 1 ] || [ "$USER_PORT" -gt 65535 ]; then
+        err "端口必须为 1-65535 的数字"
+        exit 1
+    fi
+    LISTEN_PORT="$USER_PORT"
 fi
-
-LISTEN_PORT=$p
 info "线路机监听端口: $LISTEN_PORT"
+
 mkdir -p /etc/sing-box
 cat > /etc/sing-box/config.json <<EOF
 {
