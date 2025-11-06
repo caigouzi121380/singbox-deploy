@@ -2,7 +2,7 @@
 
 一个强大的 Sing-box 自动化部署工具，支持落地机 Shadowsocks 部署和线路机 VLESS Reality 中转的完整解决方案。
 ---
-✨ 主要特性
+# ✨ 主要特性
 🎯 落地机功能
 
 ✅ 一键安装 - 自动部署 Sing-box + Shadowsocks 服务器
