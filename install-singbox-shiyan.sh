@@ -810,8 +810,13 @@ install_singbox() {
 }
 install_singbox
 UUID=$(cat /proc/sys/kernel/random/uuid)
-info "生成 Reality 私钥"
-REALITY_PK=$(sing-box generate reality-keypair)
+info "生成 Reality 密钥对"
+# 生成 Reality 密钥对
+REALITY_KEYS=$(sing-box generate reality-keypair)
+# 提取私钥（服务器配置用）
+REALITY_PK=$(echo "$REALITY_KEYS" | awk '{print $2}')
+# 提取公钥（客户端链接用）
+REALITY_PUB=$(echo "$REALITY_KEYS" | awk '{print $4}')
 # 生成随机 Short ID (8字节 hex)
 REALITY_SID=$(sing-box generate rand 8 --hex)
 info "Reality PK: $REALITY_PK"
@@ -929,7 +934,7 @@ PUB_IP=$(curl -s https://api.ipify.org || echo "YOUR_RELAY_IP")
 echo ""
 echo "✅ 安装完成"
 echo "VLESS Reality 中转节点："
-echo "vless://$UUID@$PUB_IP:$LISTEN_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=addons.mozilla.org&fp=chrome&pbk=$REALITY_PK&sid=$REALITY_SID#relay"
+echo "vless://$UUID@$PUB_IP:$LISTEN_PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=addons.mozilla.org&fp=chrome&pbk=$REALITY_PUB&sid=$REALITY_SID#relay"
 echo ""
 RELAY_TEMPLATE
 
