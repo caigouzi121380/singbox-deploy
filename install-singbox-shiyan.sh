@@ -842,6 +842,7 @@ cat > /etc/sing-box/config.json <<EOF
       "type": "vless",
       "listen": "::",
       "listen_port": $LISTEN_PORT,
+      "outbound": "relay-out",
       "users": [
         {
           "uuid": "$UUID",
@@ -854,10 +855,13 @@ cat > /etc/sing-box/config.json <<EOF
         "reality": {
           "enabled": true,
           "handshake": {
-            "server": "addons.mozilla.org"
+            "server": "addons.mozilla.org",
+            "server_port": 443
           },
           "private_key": "$REALITY_PK",
-          "short_id": [ "$REALITY_SID" ]
+          "short_id": [
+            "$REALITY_SID"
+          ]
         }
       },
       "tag": "vless-in"
@@ -876,14 +880,7 @@ cat > /etc/sing-box/config.json <<EOF
       "type": "direct",
       "tag": "direct-out"
     }
-  ],
-  "route": {
-    "rules": [
-      {
-        "outbound": "relay-out"
-      }
-    ]
-  }
+  ]
 }
 EOF
 if [ "$OS" = "alpine" ]; then
