@@ -486,7 +486,14 @@ generate_uris() {
         ss_encoded=$(printf "%s" "$ss_userinfo" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
     fi
     ss_b64=$(printf "%s" "$ss_userinfo" | base64 -w0 2>/dev/null || printf "%s" "$ss_userinfo" | base64 | tr -d '\n')
-    
+
+    # HY2 URI
+    if command -v python3 >/dev/null 2>&1; then
+        hy2_encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$PSK_HY2")
+    else
+        hy2_encoded=$(printf "%s" "$PSK_HY2" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
+    fi
+
     echo "=== Shadowsocks (SS) ==="
     echo "ss://${ss_encoded}@${host}:${PORT_SS}#singbox-ss"
     echo "ss://${ss_b64}@${host}:${PORT_SS}#singbox-ss"
@@ -494,7 +501,7 @@ generate_uris() {
     
     # HY2 URI
     echo "=== Hysteria2 (HY2) ==="
-    echo "hy2://${PSK_HY2}@${host}:${PORT_HY2}/?sni=www.bing.com#singbox-hy2"
+    echo "hy2://${hy2_encoded}@${host}:${PORT_HY2}/?sni=www.bing.com#singbox-hy2"
     echo ""
     
     # VLESS Reality URI
