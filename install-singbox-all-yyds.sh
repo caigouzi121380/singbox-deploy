@@ -1086,7 +1086,7 @@ RELAY_TEMPLATE
 
     chmod +x "$RELAY_SCRIPT_PATH"
 
-    info "✅ 线路鸡脚本已生成：$RELAY_SCRIPT_PATH"
+    info "✅ 线路机脚本已生成：$RELAY_SCRIPT_PATH"
     echo ""
     info "请手动复制以下内容到线路机，保存为 /tmp/relay-install.sh，并执行：chmod +x /tmp/relay-install.sh && bash /tmp/relay-install.sh"
     echo "------------------------------------------"
@@ -1094,7 +1094,7 @@ RELAY_TEMPLATE
     echo "------------------------------------------"
     echo ""
     info "在线路机执行命令示例："
-    echo "   # nano /tmp/relay-install.sh 保存后执行"
+    echo "   nano /tmp/relay-install.sh 保存后执行"
     echo "   chmod +x /tmp/relay-install.sh && bash /tmp/relay-install.sh"
     echo ""
     info "复制完成后，即可在线路机完成 sing-box 中转节点部署。"
@@ -1118,7 +1118,7 @@ while true; do
 9) 重启服务
 10) 查看状态
 11) 更新 sing-box
-12) 生成线路鸡出口脚本 (SS出站)
+12) 生成线路机出口脚本 (SS出站)
 13) 卸载 sing-box
 0) 退出
 ==========================
@@ -1149,6 +1149,6 @@ SB_SCRIPT
 
 chmod +x "$SB_PATH" || warn "无法设置 $SB_PATH 为可执行"
 
-info "sb 已创建：请输入 sb 运行管理面板"
+info "sb 已创建：可输入 sb 运行管理面板"
 
 # end of script
