@@ -704,8 +704,9 @@ generate_and_save_uris() {
     # percent encode minimal
     ss_encoded=$(url_encode_min "$ss_userinfo")
     ss_b64=$(printf "%s" "$ss_userinfo" | base64 -w0 2>/dev/null || printf "%s" "$ss_userinfo" | base64 | tr -d '\n')
-    hy2_encoded=$(printf "%s" "$PSK_HY2" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
-    hy2_uri="hy2://${hy2_encoded}@${host}:${PORT_HY2}/?sni=www.bing.com#singbox-hy2"
+    hy2_encoded=$(url_encode_min "$PSK_HY2")
+    hy2_uri="hy2://${hy2_encoded}@${PUBLIC_IP}:${HY2_PORT}/?sni=www.bing.com#singbox-hy2"
+
 
     # reality pubkey read file or from config (fallback)
     if [ -f "$REALITY_PUB_FILE" ]; then
