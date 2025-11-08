@@ -27,7 +27,7 @@
 
 [![sponsor](https://img.shields.io/badge/Sponsor-懒猫云-brightgreen)]()  
 [![sponsor](https://img.shields.io/badge/Sponsor-拼垃圾-brightgreen)]()
-
+[![sponsor](https://img.shields.io/badge/Sponsor-小白鼠测试群友-brightgreen)]()
 本项目能够顺利完成，离不开 **懒猫云** 与 **拼垃圾** 的支持。  
 非常感谢他们提供的赞助与鼓励。  
 **真心感谢！**
