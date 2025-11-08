@@ -265,7 +265,7 @@ create_config() {
     mkdir -p "$(dirname "$CONFIG_PATH")"
     
     # 生成完整的 JSON 配置文件
-    cat > "$CONFIG_PATH" <<CONFIGEOF
+    cat > "$CONFIG_PATH" <<'CONFIGEOF'
 {
   "log": {
     "level": "info",
@@ -275,19 +275,19 @@ create_config() {
     {
       "type": "shadowsocks",
       "listen": "::",
-      "listen_port": $PORT_SS,
+      "listen_port": PORT_SS_VALUE,
       "method": "2022-blake3-aes-128-gcm",
-      "password": "$PSK_SS",
+      "password": "PSK_SS_VALUE",
       "tag": "ss-in"
     },
     {
       "type": "hysteria2",
       "tag": "hy2-in",
       "listen": "::",
-      "listen_port": $PORT_HY2,
+      "listen_port": PORT_HY2_VALUE,
       "users": [
         {
-          "password": "$PSK_HY2"
+          "password": "PSK_HY2_VALUE"
         }
       ],
       "tls": {
@@ -301,10 +301,10 @@ create_config() {
       "type": "vless",
       "tag": "vless-in",
       "listen": "::",
-      "listen_port": $PORT_REALITY,
+      "listen_port": PORT_REALITY_VALUE,
       "users": [
         {
-          "uuid": "$UUID",
+          "uuid": "UUID_VALUE",
           "flow": "xtls-rprx-vision"
         }
       ],
@@ -317,8 +317,8 @@ create_config() {
             "server": "addons.mozilla.org",
             "server_port": 443
           },
-          "private_key": "$REALITY_PK",
-          "short_id": ["$REALITY_SID"]
+          "private_key": "REALITY_PK_VALUE",
+          "short_id": ["REALITY_SID_VALUE"]
         }
       }
     }
@@ -331,6 +331,16 @@ create_config() {
   ]
 }
 CONFIGEOF
+
+    # 替换占位符
+    sed -i "s|PORT_SS_VALUE|$PORT_SS|g" "$CONFIG_PATH"
+    sed -i "s|PSK_SS_VALUE|$PSK_SS|g" "$CONFIG_PATH"
+    sed -i "s|PORT_HY2_VALUE|$PORT_HY2|g" "$CONFIG_PATH"
+    sed -i "s|PSK_HY2_VALUE|$PSK_HY2|g" "$CONFIG_PATH"
+    sed -i "s|PORT_REALITY_VALUE|$PORT_REALITY|g" "$CONFIG_PATH"
+    sed -i "s|UUID_VALUE|$UUID|g" "$CONFIG_PATH"
+    sed -i "s|REALITY_PK_VALUE|$REALITY_PK|g" "$CONFIG_PATH"
+    sed -i "s|REALITY_SID_VALUE|$REALITY_SID|g" "$CONFIG_PATH"
 
     if command -v sing-box >/dev/null 2>&1; then
         if sing-box check -c "$CONFIG_PATH" >/dev/null 2>&1; then
