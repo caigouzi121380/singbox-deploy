@@ -775,7 +775,7 @@ json_update() {
     jq "$filter" "$CONFIG_PATH" > "$tmp" && mv "$tmp" "$CONFIG_PATH"
 }
 
-# Reset SS based on template
+# Reset SS based on current config
 action_reset_ss() {
     read -p "输入新的 SS 端口（回车保持 $SS_PORT）: " new_ss_port
     [ -z "$new_ss_port" ] && new_ss_port="$SS_PORT"
@@ -786,7 +786,9 @@ action_reset_ss() {
     info "正在停止服务..."
     service_stop || warn "停止服务失败"
 
-    # 使用 jq 修改模板 JSON
+    # 使用当前配置文件为模板，先备份
+    cp "$CONFIG_PATH" "${CONFIG_PATH}.bak"
+
     jq --argjson port "$new_ss_port" --arg psk "$new_ss_psk" '
     .inbounds |= map(
         if .type=="shadowsocks" then
@@ -795,7 +797,7 @@ action_reset_ss() {
         else .
         end
     )
-    ' "$CONFIG_TEMPLATE_PATH" > "$CONFIG_PATH"
+    ' "$CONFIG_PATH" > "${CONFIG_PATH}.tmp" && mv "${CONFIG_PATH}.tmp" "$CONFIG_PATH"
 
     info "已更新 SS 端口($new_ss_port)与密码(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
@@ -803,7 +805,7 @@ action_reset_ss() {
     generate_and_save_uris || warn "生成 URI 失败"
 }
 
-# Reset HY2 based on template
+# Reset HY2 based on current config
 action_reset_hy2() {
     read -p "输入新的 HY2 端口（回车保持 $HY2_PORT）: " new_hy2_port
     [ -z "$new_hy2_port" ] && new_hy2_port="$HY2_PORT"
@@ -814,6 +816,8 @@ action_reset_hy2() {
     info "正在停止服务..."
     service_stop || warn "停止服务失败"
 
+    cp "$CONFIG_PATH" "${CONFIG_PATH}.bak"
+
     jq --argjson port "$new_hy2_port" --arg psk "$new_hy2_psk" '
     .inbounds |= map(
         if .type=="hysteria2" then
@@ -822,7 +826,7 @@ action_reset_hy2() {
         else .
         end
     )
-    ' "$CONFIG_TEMPLATE_PATH" > "$CONFIG_PATH"
+    ' "$CONFIG_PATH" > "${CONFIG_PATH}.tmp" && mv "${CONFIG_PATH}.tmp" "$CONFIG_PATH"
 
     info "已更新 HY2 端口($new_hy2_port)与密码(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
@@ -830,7 +834,7 @@ action_reset_hy2() {
     generate_and_save_uris || warn "生成 URI 失败"
 }
 
-# Reset Reality based on template
+# Reset Reality based on current config
 action_reset_reality() {
     read -p "输入新的 Reality 端口（回车保持 $REALITY_PORT）: " new_reality_port
     [ -z "$new_reality_port" ] && new_reality_port="$REALITY_PORT"
@@ -841,6 +845,8 @@ action_reset_reality() {
     info "正在停止服务..."
     service_stop || warn "停止服务失败"
 
+    cp "$CONFIG_PATH" "${CONFIG_PATH}.bak"
+
     jq --argjson port "$new_reality_port" --arg uuid "$new_reality_uuid" '
     .inbounds |= map(
         if .type=="vless" then
@@ -849,7 +855,7 @@ action_reset_reality() {
         else .
         end
     )
-    ' "$CONFIG_TEMPLATE_PATH" > "$CONFIG_PATH"
+    ' "$CONFIG_PATH" > "${CONFIG_PATH}.tmp" && mv "${CONFIG_PATH}.tmp" "$CONFIG_PATH"
 
     info "已更新 Reality 端口($new_reality_port)与 UUID(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
