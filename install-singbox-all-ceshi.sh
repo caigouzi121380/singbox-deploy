@@ -663,6 +663,76 @@ read_config_fields() {
     REALITY_PUB="${REALITY_PUB:-}"
 }
 
+# 生成完整配置文件的函数
+write_config() {
+    cat > "$CONFIG_PATH" <<JSONEOF
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "shadowsocks",
+      "listen": "::",
+      "listen_port": $SS_PORT,
+      "method": "$SS_METHOD",
+      "password": "$SS_PSK",
+      "tag": "ss-in"
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy2-in",
+      "listen": "::",
+      "listen_port": $HY2_PORT,
+      "users": [
+        {
+          "password": "$HY2_PSK"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "alpn": ["h3"],
+        "certificate_path": "/etc/sing-box/certs/fullchain.pem",
+        "key_path": "/etc/sing-box/certs/privkey.pem"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "::",
+      "listen_port": $REALITY_PORT,
+      "users": [
+        {
+          "uuid": "$REALITY_UUID",
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "addons.mozilla.org",
+        "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "addons.mozilla.org",
+            "server_port": 443
+          },
+          "private_key": "$REALITY_PK",
+          "short_id": ["$REALITY_SID"]
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct-out"
+    }
+  ]
+}
+JSONEOF
+}
+
 # generate uris from current config and save
 generate_and_save_uris() {
     read_config_fields || return 1
@@ -776,13 +846,26 @@ action_reset_ss() {
     info "正在停止服务..."
     service_stop || warn "停止服务失败"
 
-    # Update SS inbound using sed
-    sed -i "/\"type\": \"shadowsocks\"/,/}/s/\"listen_port\": [0-9]*/\"listen_port\": $new_ss_port/" "$CONFIG_PATH"
-    sed -i "/\"type\": \"shadowsocks\"/,/}/s/\"password\": \"[^\"]*\"/\"password\": \"$new_ss_psk\"/" "$CONFIG_PATH"
-
-    # 更新缓存
-    [ -f /etc/sing-box/.config_cache ] && sed -i "s/^SS_PORT=.*/SS_PORT=$new_ss_port/" /etc/sing-box/.config_cache
-    [ -f /etc/sing-box/.config_cache ] && sed -i "s/^SS_PSK=.*/SS_PSK=$new_ss_psk/" /etc/sing-box/.config_cache
+    # 更新 SS 变量
+    SS_PORT=$new_ss_port
+    SS_PSK=$new_ss_psk
+    
+    # 重新生成完整配置文件
+    write_config
+    
+    # 更新缓存文件
+    cat > /etc/sing-box/.config_cache <<CACHEEOF
+SS_PORT=$SS_PORT
+SS_PSK=$SS_PSK
+SS_METHOD=$SS_METHOD
+HY2_PORT=$HY2_PORT
+HY2_PSK=$HY2_PSK
+REALITY_PORT=$REALITY_PORT
+REALITY_UUID=$REALITY_UUID
+REALITY_PK=$REALITY_PK
+REALITY_SID=$REALITY_SID
+REALITY_PUB=$REALITY_PUB
+CACHEEOF
 
     info "已更新 SS 端口($new_ss_port)与密码(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
@@ -804,13 +887,26 @@ action_reset_hy2() {
     info "正在停止服务..."
     service_stop || warn "停止服务失败"
 
-    # Update HY2 inbound using sed
-    sed -i "/\"type\": \"hysteria2\"/,/}/s/\"listen_port\": [0-9]*/\"listen_port\": $new_hy2_port/" "$CONFIG_PATH"
-    sed -i "/\"type\": \"hysteria2\"/,/}/s/\"password\": \"[^\"]*\"/\"password\": \"$new_hy2_psk\"/" "$CONFIG_PATH"
-
-    # 更新缓存
-    [ -f /etc/sing-box/.config_cache ] && sed -i "s/^HY2_PORT=.*/HY2_PORT=$new_hy2_port/" /etc/sing-box/.config_cache
-    [ -f /etc/sing-box/.config_cache ] && sed -i "s/^HY2_PSK=.*/HY2_PSK=$new_hy2_psk/" /etc/sing-box/.config_cache
+    # 更新 HY2 变量
+    HY2_PORT=$new_hy2_port
+    HY2_PSK=$new_hy2_psk
+    
+    # 重新生成完整配置文件
+    write_config
+    
+    # 更新缓存文件
+    cat > /etc/sing-box/.config_cache <<CACHEEOF
+SS_PORT=$SS_PORT
+SS_PSK=$SS_PSK
+SS_METHOD=$SS_METHOD
+HY2_PORT=$HY2_PORT
+HY2_PSK=$HY2_PSK
+REALITY_PORT=$REALITY_PORT
+REALITY_UUID=$REALITY_UUID
+REALITY_PK=$REALITY_PK
+REALITY_SID=$REALITY_SID
+REALITY_PUB=$REALITY_PUB
+CACHEEOF
 
     info "已更新 HY2 端口($new_hy2_port)与密码(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
@@ -834,13 +930,26 @@ action_reset_reality() {
     info "正在停止服务..."
     service_stop || warn "停止服务失败"
 
-    # Update Reality inbound using sed
-    sed -i "/\"type\": \"vless\"/,/}/s/\"listen_port\": [0-9]*/\"listen_port\": $new_reality_port/" "$CONFIG_PATH"
-    sed -i "/\"type\": \"vless\"/,/}/s/\"uuid\": \"[^\"]*\"/\"uuid\": \"$new_reality_uuid\"/" "$CONFIG_PATH"
-
-    # 更新缓存
-    [ -f /etc/sing-box/.config_cache ] && sed -i "s/^REALITY_PORT=.*/REALITY_PORT=$new_reality_port/" /etc/sing-box/.config_cache
-    [ -f /etc/sing-box/.config_cache ] && sed -i "s/^REALITY_UUID=.*/REALITY_UUID=$new_reality_uuid/" /etc/sing-box/.config_cache
+    # 更新 Reality 变量
+    REALITY_PORT=$new_reality_port
+    REALITY_UUID=$new_reality_uuid
+    
+    # 重新生成完整配置文件
+    write_config
+    
+    # 更新缓存文件
+    cat > /etc/sing-box/.config_cache <<CACHEEOF
+SS_PORT=$SS_PORT
+SS_PSK=$SS_PSK
+SS_METHOD=$SS_METHOD
+HY2_PORT=$HY2_PORT
+HY2_PSK=$HY2_PSK
+REALITY_PORT=$REALITY_PORT
+REALITY_UUID=$REALITY_UUID
+REALITY_PK=$REALITY_PK
+REALITY_SID=$REALITY_SID
+REALITY_PUB=$REALITY_PUB
+CACHEEOF
 
     info "已更新 Reality 端口($new_reality_port)与 UUID(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
@@ -889,7 +998,7 @@ action_uninstall() {
     info "卸载完成"
 }
 
-# Generate relay script (SS only - unchanged)
+# Generate relay script (SS only)
 action_generate_relay_script() {
     info "准备生成线路鸡一键安装脚本..."
     read_config_fields || return 1
