@@ -53,7 +53,7 @@ install_deps() {
     case "$OS" in
         alpine)
             apk update || { err "apk update 失败"; exit 1; }
-            apk add --no-cache bash curl ca-certificates openssl openrc || {
+            apk add --no-cache bash curl ca-certificates openssl openrc jq || {
                 err "依赖安装失败"
                 exit 1
             }
@@ -333,6 +333,23 @@ EOF
             warn "配置文件验证失败，但将继续..."
         fi
     fi
+    
+    # 保存所有配置到独立文件供 sb 脚本读取
+    mkdir -p /etc/sing-box
+    cat > /etc/sing-box/.config_cache <<CACHE
+SS_PORT=$PORT_SS
+SS_PSK=$PSK_SS
+SS_METHOD=2022-blake3-aes-128-gcm
+HY2_PORT=$PORT_HY2
+HY2_PSK=$PSK_HY2
+REALITY_PORT=$PORT_REALITY
+REALITY_UUID=$UUID
+REALITY_PK=$REALITY_PK
+REALITY_SID=$REALITY_SID
+REALITY_PUB=$REALITY_PUB
+CACHE
+    
+    info "配置缓存已保存到 /etc/sing-box/.config_cache"
 }
 
 create_config
@@ -615,41 +632,19 @@ read_config_fields() {
         return 0
     fi
 
-    # 备选：使用 Python 解析 JSON
-    if command -v python3 >/dev/null 2>&1; then
-        eval "$(python3 <<'PYSCRIPT'
-import json
-import sys
-
-try:
-    with open('/etc/sing-box/config.json') as f:
-        config = json.load(f)
-    
-    for ib in config.get('inbounds', []):
-        if ib.get('type') == 'shadowsocks':
-            print(f"SS_PORT={ib.get('listen_port', '')}")
-            print(f"SS_PSK='{ib.get('password', '')}'")
-            print(f"SS_METHOD={ib.get('method', '')}")
-        elif ib.get('type') == 'hysteria2':
-            print(f"HY2_PORT={ib.get('listen_port', '')}")
-            users = ib.get('users', [])
-            if users:
-                print(f"HY2_PSK='{users[0].get('password', '')}'")
-        elif ib.get('type') == 'vless':
-            print(f"REALITY_PORT={ib.get('listen_port', '')}")
-            users = ib.get('users', [])
-            if users:
-                print(f"REALITY_UUID='{users[0].get('uuid', '')}'")
-            tls = ib.get('tls', {})
-            reality = tls.get('reality', {})
-            print(f"REALITY_PK='{reality.get('private_key', '')}'")
-            short_ids = reality.get('short_id', [])
-            if short_ids:
-                print(f"REALITY_SID='{short_ids[0]}'")
-except Exception as e:
-    pass
-PYSCRIPT
-)"
+    # 备选：使用 jq 解析 JSON
+    if command -v jq >/dev/null 2>&1; then
+        SS_PORT=$(jq -r '.inbounds[] | select(.type=="shadowsocks") | .listen_port' "$CONFIG_PATH" 2>/dev/null | head -1)
+        SS_PSK=$(jq -r '.inbounds[] | select(.type=="shadowsocks") | .password' "$CONFIG_PATH" 2>/dev/null | head -1)
+        SS_METHOD=$(jq -r '.inbounds[] | select(.type=="shadowsocks") | .method' "$CONFIG_PATH" 2>/dev/null | head -1)
+        
+        HY2_PORT=$(jq -r '.inbounds[] | select(.type=="hysteria2") | .listen_port' "$CONFIG_PATH" 2>/dev/null | head -1)
+        HY2_PSK=$(jq -r '.inbounds[] | select(.type=="hysteria2") | .users[0].password' "$CONFIG_PATH" 2>/dev/null | head -1)
+        
+        REALITY_PORT=$(jq -r '.inbounds[] | select(.type=="vless") | .listen_port' "$CONFIG_PATH" 2>/dev/null | head -1)
+        REALITY_UUID=$(jq -r '.inbounds[] | select(.type=="vless") | .users[0].uuid' "$CONFIG_PATH" 2>/dev/null | head -1)
+        REALITY_PK=$(jq -r '.inbounds[] | select(.type=="vless") | .tls.reality.private_key' "$CONFIG_PATH" 2>/dev/null | head -1)
+        REALITY_SID=$(jq -r '.inbounds[] | select(.type=="vless") | .tls.reality.short_id[0]' "$CONFIG_PATH" 2>/dev/null | head -1)
     fi
 
     # 从保存的文件读取 Reality 相关信息
@@ -836,9 +831,9 @@ with open('$CONFIG_PATH','w') as f:
     json.dump(c,f,indent=2)
 PY
 
-    # 保存到临时文件确保读取到新值
-    echo "$new_hy2_port" > /etc/sing-box/.hy2_port_cache
-    echo "$new_hy2_psk" > /etc/sing-box/.hy2_psk_cache
+    # 更新缓存
+    sed -i "s/^HY2_PORT=.*/HY2_PORT=$new_hy2_port/" /etc/sing-box/.config_cache
+    sed -i "s/^HY2_PSK=.*/HY2_PSK=$new_hy2_psk/" /etc/sing-box/.config_cache
 
     info "已更新 HY2 端口($new_hy2_port)与密码(隐藏)，正在启动服务..."
     service_start || warn "启动服务失败"
