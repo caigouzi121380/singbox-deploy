@@ -98,7 +98,7 @@ if [[ -n "$user_name" ]]; then
 else
     suffix=""
 fi
-echo "SUFFIX=\"$suffix\"" > "$SB_PATH"
+#echo "SUFFIX=\"$suffix\"" > "$SB_PATH"
 
 # -----------------------
 # 配置端口和密码
