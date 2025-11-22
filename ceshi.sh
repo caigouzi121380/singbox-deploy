@@ -163,7 +163,7 @@ rand_uuid() {
 # -----------------------
 # 配置端口和密码
 get_config() {
-    if $ENABLE_SS; then
+    if [ "$ENABLE_SS" = true ]; then
         info "=== 配置 Shadowsocks (SS) ==="
         if [ -n "${SINGBOX_PORT_SS:-}" ]; then
             PORT_SS="$SINGBOX_PORT_SS"
@@ -176,7 +176,7 @@ get_config() {
         info "SS 密码已自动生成"
     fi
 
-    if $ENABLE_HY2; then
+    if [ "$ENABLE_HY2" = true ]; then
         info "=== 配置 Hysteria2 (HY2) ==="
         if [ -n "${SINGBOX_PORT_HY2:-}" ]; then
             PORT_HY2="$SINGBOX_PORT_HY2"
@@ -189,7 +189,7 @@ get_config() {
         info "HY2 密码已自动生成"
     fi
 
-    if $ENABLE_TUIC; then
+    if [ "$ENABLE_TUIC" = true ]; then
         info "=== 配置 TUIC ==="
         if [ -n "${SINGBOX_PORT_TUIC:-}" ]; then
             PORT_TUIC="$SINGBOX_PORT_TUIC"
@@ -203,7 +203,7 @@ get_config() {
         info "TUIC UUID 和密码已自动生成"
     fi
 
-    if $ENABLE_REALITY; then
+    if [ "$ENABLE_REALITY" = true ]; then
         info "=== 配置 VLESS Reality ==="
         if [ -n "${SINGBOX_PORT_REALITY:-}" ]; then
             PORT_REALITY="$SINGBOX_PORT_REALITY"
@@ -269,7 +269,7 @@ install_singbox
 # -----------------------
 # 生成 Reality 密钥对
 generate_reality_keys() {
-    if ! $ENABLE_REALITY; then
+    if [ "$ENABLE_REALITY" != true ]; then
         return 0
     fi
     
@@ -328,7 +328,7 @@ create_config() {
     # 构建 inbounds 数组（使用数组避免逗号问题）
     INBOUNDS_ARRAY=()
     
-    if $ENABLE_SS; then
+    if [ "$ENABLE_SS" = true ]; then
         INBOUNDS_ARRAY+=('    {
       "type": "shadowsocks",
       "listen": "::",
@@ -339,7 +339,7 @@ create_config() {
     }')
     fi
     
-    if $ENABLE_HY2; then
+    if [ "$ENABLE_HY2" = true ]; then
         INBOUNDS_ARRAY+=('    {
       "type": "hysteria2",
       "tag": "hy2-in",
@@ -359,7 +359,7 @@ create_config() {
     }')
     fi
     
-    if $ENABLE_TUIC; then
+    if [ "$ENABLE_TUIC" = true ]; then
         INBOUNDS_ARRAY+=('    {
       "type": "tuic",
       "tag": "tuic-in",
@@ -381,7 +381,7 @@ create_config() {
     }')
     fi
     
-    if $ENABLE_REALITY; then
+    if [ "$ENABLE_REALITY" = true ]; then
         INBOUNDS_ARRAY+=('    {
       "type": "vless",
       "tag": "vless-in",
@@ -597,7 +597,7 @@ fi
 generate_uris() {
     local host="$PUB_IP"
     
-    if $ENABLE_SS; then
+    if [ "$ENABLE_SS" = true ]; then
         local ss_userinfo="2022-blake3-aes-128-gcm:${PSK_SS}"
         ss_encoded=$(printf "%s" "$ss_userinfo" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
         ss_b64=$(printf "%s" "$ss_userinfo" | base64 -w0 2>/dev/null || printf "%s" "$ss_userinfo" | base64 | tr -d '\n')
@@ -608,21 +608,21 @@ generate_uris() {
         echo ""
     fi
     
-    if $ENABLE_HY2; then
+    if [ "$ENABLE_HY2" = true ]; then
         hy2_encoded=$(printf "%s" "$PSK_HY2" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
         echo "=== Hysteria2 (HY2) ==="
         echo "hy2://${hy2_encoded}@${host}:${PORT_HY2}/?sni=www.bing.com&alpn=h3&insecure=1#hy2${suffix}"
         echo ""
     fi
 
-    if $ENABLE_TUIC; then
+    if [ "$ENABLE_TUIC" = true ]; then
         tuic_encoded=$(printf "%s" "$PSK_TUIC" | sed 's/:/%3A/g; s/+/%2B/g; s/\//%2F/g; s/=/%3D/g')
         echo "=== TUIC ==="
         echo "tuic://${UUID_TUIC}:${tuic_encoded}@${host}:${PORT_TUIC}/?congestion_control=bbr&alpn=h3&sni=www.bing.com&insecure=1#tuic${suffix}"
         echo ""
     fi
     
-    if $ENABLE_REALITY; then
+    if [ "$ENABLE_REALITY" = true ]; then
         echo "=== VLESS Reality ==="
         echo "vless://${UUID}@${host}:${PORT_REALITY}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=addons.mozilla.org&fp=chrome&pbk=${REALITY_PUB}&sid=${REALITY_SID}#reality${suffix}"
         echo ""
