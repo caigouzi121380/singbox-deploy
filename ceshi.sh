@@ -299,9 +299,53 @@ install_singbox() {
 }
 
 install_singbox
+install_singbox() {
+    info "开始安装 sing-box..."
+
+    if command -v sing-box >/dev/null 2>&1; then
+        CURRENT_VERSION=$(sing-box version 2>/dev/null | head -1 || echo "unknown")
+        warn "检测到已安装 sing-box: $CURRENT_VERSION"
+        read -p "是否重新安装?(y/N): " REINSTALL
+        if [[ ! "$REINSTALL" =~ ^[Yy]$ ]]; then
+            info "跳过 sing-box 安装"
+            return 0
+        fi
+    fi
+
+    case "$OS" in
+        alpine)
+            info "使用 Edge 仓库安装 sing-box"
+            apk update || { err "apk update 失败"; exit 1; }
+            apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community sing-box || {
+                err "sing-box 安装失败"
+                exit 1
+            }
+            ;;
+        debian|redhat)
+            bash <(curl -fsSL https://sing-box.app/install.sh) || {
+                err "sing-box 安装失败"
+                exit 1
+            }
+            ;;
+        *)
+            err "未支持的系统,无法安装 sing-box"
+            exit 1
+            ;;
+    esac
+
+    if ! command -v sing-box >/dev/null 2>&1; then
+        err "sing-box 安装后未找到可执行文件"
+        exit 1
+    fi
+
+    INSTALLED_VERSION=$(sing-box version 2>/dev/null | head -1 || echo "unknown")
+    info "sing-box 安装成功: $INSTALLED_VERSION"
+}
+
+install_singbox
 
 # -----------------------
-# 生成 Reality 密钥对
+# 生成 Reality 密钥对（必须在 sing-box 安装之后）
 generate_reality_keys() {
     if ! $ENABLE_REALITY; then
         info "跳过 Reality 密钥生成（未选择 Reality 协议）"
