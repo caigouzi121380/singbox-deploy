@@ -182,7 +182,7 @@ select_protocols
 # -----------------------
 # 在获取公网 IP 之前，询问连接ip和sni配置
 echo ""
-echo "请输入节点连接 IP（留空默认出口 IP）:"
+echo "请输入节点连接 IP或ddns域名（留空默认出口 IP）:"
 read -r CUSTOM_IP
 CUSTOM_IP="$(echo "$CUSTOM_IP" | tr -d '[:space:]')"
 
@@ -721,7 +721,7 @@ get_public_ip() {
 # 如果用户提供了 CUSTOM_IP，则优先使用；否则自动检测出口 IP
 if [ -n "${CUSTOM_IP:-}" ]; then
     PUB_IP="$CUSTOM_IP"
-    info "使用用户提供的入口 IP 作为节点 IP: $PUB_IP"
+    info "使用用户提供的连接IP或ddns域名 : $PUB_IP"
 else
     PUB_IP=$(get_public_ip || echo "YOUR_SERVER_IP")
     if [ "$PUB_IP" = "YOUR_SERVER_IP" ]; then
