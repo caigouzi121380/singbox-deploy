@@ -23,16 +23,28 @@
 - ✅ **流量转发** - 自动转发流量到落地机节点
 - ✅ **完整链接** - 生成可用的 VLESS Reality 客户端链接
 
-## 🙏 致谢 · Acknowledgements
+## 🙏 特别鸣谢
 
-[![sponsor](https://img.shields.io/badge/Sponsor-懒猫云-brightgreen)]()  
-[![sponsor](https://img.shields.io/badge/Sponsor-拼垃圾-brightgreen)]()  
-[![support](https://img.shields.io/badge/Support-小白鼠测试群友-blue)]()
+<p align="center">
+  <a href="https://console.alice.ws/" target="_blank">
+    <img src="https://alicenetworks.net/assets/images/alice.png" alt="alicenetworks" width="60" />
+    <br>
+    <img src="https://img.shields.io/badge/alicenetworks-支持者-blue?style=for-the-badge" />
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://lxc.lazycats.online/" target="_blank">
+    <img src="https://lxc.lazycats.online/themes/web/yunyoo/assets/img/logo/logo.png" alt="懒猫云" width="60" />
+    <br>
+    <img src="https://img.shields.io/badge/懒猫云-支持者-green?style=for-the-badge" />
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://www.lxc.wiki/" target="_blank">
+    <img src="https://www.lxc.wiki/themes/web/starvm-phj/img/logo.png" alt="拼好鸡" width="60" />
+    <br>
+    <img src="https://img.shields.io/badge/拼好鸡-支持者-orange?style=for-the-badge" />
+  </a>
+</p>
 
-本项目能够顺利完成，离不开 **懒猫云** 与 **拼垃圾** 的支持。  
-同时特别感谢 **小白鼠测试群友** 在测试阶段给予的大力协助与反馈。  
-你们的帮助让我在开发过程中无后顾之忧。  
-**真心感谢！**
 
 ## ✅ 一键部署命令
 
