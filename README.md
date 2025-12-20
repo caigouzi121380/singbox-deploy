@@ -30,7 +30,7 @@
 <table>
   <tr>
     <td align="center" width="220">
-      <a href="https://console.alice.ws/" target="_blank">
+      <a href="https://console.alice.sh/" target="_blank">
         <img src="https://console.alice.sh/assets/images/logo-yellow.svg" width="100" alt="AliceNetworks" />
         <br><sub><b>AliceNetworks</b></sub>
       </a>
