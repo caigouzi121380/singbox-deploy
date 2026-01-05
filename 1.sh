@@ -1212,7 +1212,7 @@ action_generate_relay() {
             read -p "请输入 SS 端口(留空则随机 10000-60000): " USER_SS_PORT
             SS_PORT="${USER_SS_PORT:-$(rand_port)}"
             SS_PSK=$(rand_pass)
-            SS_METHOD="2022-blake3-aes-128-gcm"
+            SS_METHOD="aes-128-gcm"
             
             info "SS 端口: $SS_PORT | 密码已自动生成"
             
@@ -1227,7 +1227,7 @@ action_generate_relay() {
               "type": "shadowsocks",
               "listen": "::",
               "listen_port": $port,
-              "method": "2022-blake3-aes-128-gcm",
+              "method": "aes-128-gcm",
               "password": $psk,
               "tag": "ss-in"
             }]
