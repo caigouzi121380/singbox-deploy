@@ -36,8 +36,8 @@
       </a>
     </td>
     <td align="center" width="220">
-      <a href="https://lxc.lazycats.online/" target="_blank">
-        <img src="https://lxc.lazycats.online/themes/web/yunyoo/assets/img/logo/logo.png" width="100" alt="懒猫云" />
+      <a href="https://lazycats.online/" target="_blank">
+        <img src="https://lazycats.online/upload/logo2.png" width="100" alt="懒猫云" />
         <br><sub><b>懒猫云</b></sub>
       </a>
     </td>
