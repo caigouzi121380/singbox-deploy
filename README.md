@@ -37,7 +37,7 @@
     </td>
     <td align="center" width="220">
       <a href="https://lxc.lazycat.wiki" target="_blank">
-        <img src="https://lazycats.online/upload/logo2.png" width="100" alt="懒猫云" />
+        <img src="https://lxc.lazycat.wiki/upload/logo2.png" width="100" alt="懒猫云" />
         <br><sub><b>懒猫云</b></sub>
       </a>
     </td>
