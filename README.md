@@ -28,6 +28,13 @@
 <div align="center">
 
 <table>
+    <tr>
+    <td align="center" width="220">
+      <a href="https://app.kaze.network/" target="_blank">
+        <img src="https://app.kaze.network/templates/lagom2/assets/img/logo/logo_big.801177361.svg" width="100" alt="Kaze" />
+        <br><sub><b>Kaze</b></sub>
+      </a>
+    </td>
   <tr>
     <td align="center" width="220">
       <a href="https://console.alice.sh/" target="_blank">
