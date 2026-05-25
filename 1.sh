@@ -333,7 +333,7 @@ get_config() {
     fi
 
     ANYTLS_USER=$(openssl rand -hex 4)
-    ANYTLS_PASS=$(openssl rand -base64 16)
+    ANYTLS_PSK=$(openssl rand -base64 16)
 
     info "AnyTLS 端口: $PORT_ANYTLS"
     info "AnyTLS 用户名: $ANYTLS_USER"
