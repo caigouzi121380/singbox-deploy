@@ -599,6 +599,7 @@ INBOUND_REALITY
           "password": "ANYTLS_PSK_PLACEHOLDER"
         }
       ],
+      "padding_scheme": [],
       "tls": {
         "enabled": true,
         "server_name": "REALITY_SNI_PLACEHOLDER",
