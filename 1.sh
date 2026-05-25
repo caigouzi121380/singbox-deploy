@@ -333,7 +333,7 @@ get_config() {
     fi
 
     ANYTLS_USER=$(openssl rand -hex 4)
-    ANYTLS_PSK=$(rand_pass)
+    ANYTLS_PASS=$(openssl rand -base64 16)
 
     info "AnyTLS 端口: $PORT_ANYTLS"
     info "AnyTLS 用户名: $ANYTLS_USER"
@@ -1677,4 +1677,5 @@ done
 SB_SCRIPT
 
 chmod +x "$SB_PATH"
+ln -sf /usr/local/bin/sb /usr/bin/sb
 info "✅ 管理面板已创建,可输入 sb 打开管理面板"
