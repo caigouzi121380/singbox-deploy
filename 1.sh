@@ -319,8 +319,8 @@ get_config() {
             PORT_REALITY="${USER_PORT_REALITY:-$(rand_port)}"
         fi
         UUID=$(rand_uuid)
-        info "Reality 端口: $PORT_REALITY"
-        info "Reality UUID 已自动生成"
+        info "VLESS Reality 端口: $PORT_REALITY"
+        info "VLESS Reality UUID 已自动生成"
     fi
     
     if $ENABLE_ANYTLS; then
@@ -328,16 +328,16 @@ get_config() {
     if [ -n "${SINGBOX_PORT_ANYTLS:-}" ]; then
         PORT_ANYTLS="$SINGBOX_PORT_ANYTLS"
     else
-        read -p "请输入 AnyTLS 端口(留空则随机 10000-60000): " USER_PORT_ANYTLS
+        read -p "请输入 AnyTLS Reality 端口(留空则随机 10000-60000): " USER_PORT_ANYTLS
         PORT_ANYTLS="${USER_PORT_ANYTLS:-$(rand_port)}"
     fi
 
     ANYTLS_USER=$(openssl rand -hex 4)
     ANYTLS_PSK=$(openssl rand -base64 16)
 
-    info "AnyTLS 端口: $PORT_ANYTLS"
-    info "AnyTLS 用户名: $ANYTLS_USER"
-    info "AnyTLS 密码已自动生成"
+    info "AnyTLS Reality 端口: $PORT_ANYTLS"
+    info "AnyTLS Reality 用户名: $ANYTLS_USER"
+    info "AnyTLS Reality 密码已自动生成"
     fi
 
     info "配置完成，继续安装..."
@@ -1247,16 +1247,16 @@ action_reset_tuic() {
     generate_uris || warn "生成 URI 失败"
 }
 
-# 重置Reality端口
+# 重置Vless Reality端口
 action_reset_reality() {
     read_config || return 1
     
     if [ "${ENABLE_REALITY:-false}" != "true" ]; then
-        err "Reality 协议未启用"
+        err "Vless Reality 协议未启用"
         return 1
     fi
     
-    read -p "输入新的 Reality 端口(回车保持 $REALITY_PORT): " new_port
+    read -p "输入新的 Vless Reality 端口(回车保持 $REALITY_PORT): " new_port
     new_port="${new_port:-$REALITY_PORT}"
     
     info "正在停止服务..."
@@ -1268,22 +1268,22 @@ action_reset_reality() {
     .inbounds |= map(if .type=="vless" then .listen_port = $port else . end)
     ' "$CONFIG_PATH" > "${CONFIG_PATH}.tmp" && mv "${CONFIG_PATH}.tmp" "$CONFIG_PATH"
     
-    info "已启动服务并更新 Reality 端口: $new_port"
+    info "已启动服务并更新 Vless Reality 端口: $new_port"
     service_start || warn "启动服务失败"
     sleep 1
     generate_uris || warn "生成 URI 失败"
 }
 
-# 重置AnyTLS端口
+# 重置AnyTLS Reality端口
 action_reset_anytls() {
     read_config || return 1
 
     if [ "${ENABLE_ANYTLS:-false}" != "true" ]; then
-        err "AnyTLS 协议未启用"
+        err "AnyTLS Reality 协议未启用"
         return 1
     fi
 
-    read -p "输入新的 AnyTLS 端口(回车保持 $ANYTLS_PORT): " new_port
+    read -p "输入新的 AnyTLS Reality 端口(回车保持 $ANYTLS_PORT): " new_port
     new_port="${new_port:-$ANYTLS_PORT}"
 
     info "正在停止服务..."
@@ -1295,7 +1295,7 @@ action_reset_anytls() {
     .inbounds |= map(if .type=="anytls" then .listen_port = $port else . end)
     ' "$CONFIG_PATH" > "${CONFIG_PATH}.tmp" && mv "${CONFIG_PATH}.tmp" "$CONFIG_PATH"
 
-    info "已启动服务并更新 AnyTLS 端口: $new_port"
+    info "已启动服务并更新 AnyTLS Reality 端口: $new_port"
     service_start || warn "启动服务失败"
     sleep 1
     generate_uris || warn "生成 URI 失败"
@@ -1611,13 +1611,13 @@ MENU
     fi
     
     if [ "${ENABLE_REALITY:-false}" = "true" ]; then
-        echo "$option) 重置 Reality 端口"
+        echo "$option) 重置 Vless Reality 端口"
         MENU_MAP[$option]="reset_reality"
         option=$((option + 1))
     fi
     
     if [ "${ENABLE_ANYTLS:-false}" = "true" ]; then
-        echo "$option) 重置 AnyTLS 端口"
+        echo "$option) 重置 AnyTLS Reality 端口"
         MENU_MAP[$option]="reset_anytls"
         option=$((option + 1))
     fi
